@@ -50,7 +50,6 @@ python3 -m http.server 3000
 ```
 3. 在浏览器打开 `http://localhost:3000` 即可开始丈量你生命的时钟。
 
-> *注意：您需要在自己的 Firebase Console 控制台中为其开启 [Authentication(Google)] 与 [Firestore Database]，否则无法将日记归档。*
 
 ## 📜 结语
 人生看似漫长，其实紧凑；看似自由，其实稀缺。
