@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生一万天</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&family=Inter:wght@300;400&display=swap');
+
+        :root {
+            --bg-paper: #F7F5F0;     
+            --page-color: #FAFAF7;   
+            --text-main: #2C2C2C;    
+            --text-muted: rgba(44, 44, 44, 0.45);
+            --border-light: rgba(44, 44, 44, 0.12);
+            --accent-red: #8B3A3A;   
+        }
+
+        body {
+            margin: 0; padding: 0; min-height: 100vh;
+            background-color: var(--bg-paper); color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            overflow: hidden; 
+        }
+
+        .card-base {
+            background-color: var(--page-color); border-radius: 2px;
+            padding: 70px 50px 60px 50px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02), inset 0 0 40px rgba(0,0,0,0.01);
+            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
+        }
+        
+        .card-base::after {
+            content: ''; position: absolute; bottom: 0; right: 0; width: 30px; height: 30px;
+            background: linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.015) 50%, var(--page-color) 50%);
+            border-radius: 0 0 2px 0; box-shadow: -1px -1px 3px rgba(0,0,0,0.015);
+        }
+
+        /* Login Screen */
+        #login-screen {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200; background-color: var(--bg-paper); transition: opacity 0.8s ease;
+        }
+        .login-title { font-family: 'Noto Serif SC', serif; font-size: 32px; letter-spacing: 5px; margin-bottom: 50px; font-weight: 300; }
+        
+        /* Onboarding */
+        #onboarding-screen {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; background-color: var(--bg-paper); transition: opacity 0.8s ease; display: none;
+        }
+        .onboarding-card { width: 440px; padding: 70px 50px; }
+        .intro-text {
+            font-family: 'Noto Serif SC', serif; font-size: 14px; line-height: 2.2; 
+            color: var(--text-main); opacity: 0.85; margin-bottom: 50px; 
+            text-align: center; letter-spacing: 1px;
+        }
+        .intro-text p { margin: 16px 0; }
+        .intro-text .highlight { color: var(--accent-red); font-weight: 600; opacity: 1; letter-spacing: 2px;}
+        .onboarding-title { font-family: 'Noto Serif SC', serif; font-size: 18px; letter-spacing: 3px; margin-bottom: 30px; font-weight: 400; color: var(--text-muted); }
+        .date-input {
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(44, 44, 44, 0.3); padding: 10px 0;
+            font-family: 'Inter', sans-serif; font-size: 16px; color: var(--text-main); text-align: center; outline: none; margin-bottom: 40px;
+        }
+        .btn {
+            background: transparent; border: 1px solid var(--text-main); color: var(--text-main); padding: 12px 30px; font-family: 'Noto Serif SC', serif; font-size: 14px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn:hover { background: var(--text-main); color: var(--page-color); }
+
+        /* App Container & Flipper */
+        #app-container { position: relative; width: 100%; max-width: 440px; perspective: 1200px; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
+        .flipper { position: relative; width: 100%; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
+        .flipper.is-flipped { transform: rotateY(180deg); }
+        .front-face, .back-face { position: absolute; top: 0; left: 0; width: 100%; backface-visibility: hidden; box-sizing: border-box; }
+        .front-face { position: relative; z-index: 2; transform: rotateY(0deg); }
+        .back-face { transform: rotateY(180deg); }
+
+        .binding { position: absolute; top: 24px; width: 100%; display: flex; justify-content: center; gap: 22px; opacity: 0.5; }
+        .hole { width: 6px; height: 6px; background: #EAE6DB; border-radius: 50%; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); }
+        
+        .date-header { font-family: 'Noto Serif SC', serif; letter-spacing: 3px; font-size: 13px; color: var(--accent-red); font-weight: 600; margin-bottom: 24px; text-transform: uppercase; transition: color 0.3s; }
+        .date-number { font-family: 'Noto Serif SC', serif; font-size: 140px; line-height: 1; font-weight: 400; margin: 0 0 0 -6px; color: var(--text-main); letter-spacing: -6px; text-shadow: 1px 1px 0 rgba(255,255,255,0.8); transition: opacity 0.3s;}
+        
+        .date-meta-wrapper { display: flex; align-items: center; justify-content: center; margin-top: 15px; }
+        .date-meta { font-family: 'Noto Serif SC', serif; font-size: 16px; color: var(--text-muted); letter-spacing: 2px; }
+        #weather-info { 
+            display: inline-block; margin-left: 14px; padding-left: 14px; 
+            border-left: 1px solid var(--border-light); 
+            font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(44, 44, 44, 0.6);
+            transition: opacity 0.6s ease; opacity: 0; white-space: nowrap; font-weight: 300;
+        }
+
+        .divider { width: 30px; height: 1px; background-color: var(--border-light); margin: 45px 0 40px 0; }
+        .quote-area { font-family: 'Noto Serif SC', serif; font-size: 17px; line-height: 2.2; color: var(--text-main); margin-bottom: 50px; opacity: 0.85; font-weight: 300; }
+        
+        .input-group { width: 100%; position: relative; }
+        .input-field {
+            width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(44, 44, 44, 0.15);
+            padding: 12px 0; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text-main); text-align: center; outline: none; transition: all 0.4s ease; letter-spacing: 1px;
+        }
+        .input-field::placeholder { font-family: 'Noto Serif SC', serif; font-style: italic; color: rgba(44, 44, 44, 0.35); }
+        .input-field:focus { border-bottom-color: rgba(44, 44, 44, 0.7); padding-bottom: 14px; }
+        
+        .meta-footer { position: absolute; bottom: -50px; width: 100%; display: flex; justify-content: space-between; align-items: center; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px;}
+        .logout-btn { cursor: pointer; text-decoration: underline; opacity: 0.7; transition: opacity 0.2s;}
+        .logout-btn:hover { opacity: 1; }
+
+        /* Recommendation Face */
+        .rec-header { font-family: 'Noto Serif SC', serif; font-size: 15px; color: var(--text-muted); letter-spacing: 3px; margin-bottom: 50px; }
+        .rec-item { margin-bottom: 35px; width: 100%; text-align: center; }
+        .rec-label { font-size: 11px; letter-spacing: 4px; color: var(--accent-red); text-transform: uppercase; margin-bottom: 8px; opacity: 0.8; }
+        .rec-title { font-family: 'Noto Serif SC', serif; font-size: 18px; letter-spacing: 1px; color: var(--text-main); font-weight: 600; }
+        .back-btn { margin-top: 20px; font-size: 12px; padding: 8px 20px; border-color: rgba(44,44,44,0.3); color: var(--text-muted);}
+        .back-btn:hover { background: transparent; color: var(--text-main); border-color: var(--text-main); }
+
+        /* Timeline Drawer */
+        #timeline-btn { position: fixed; right: 40px; top: 40px; font-family: 'Noto Serif SC', serif; letter-spacing: 2px; font-size: 14px; color: var(--text-main); opacity: 0.6; cursor: pointer; transition: opacity 0.3s; z-index: 20; }
+        #timeline-btn:hover { opacity: 1; }
+
+        #drawer {
+            position: fixed; top: 0; right: -420px; width: 400px; height: 100%;
+            background: var(--page-color); box-shadow: -4px 0 24px rgba(0,0,0,0.05); z-index: 50;
+            transition: right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: auto; border-left: 1px solid var(--border-light); padding: 50px 40px; box-sizing: border-box;
+        }
+        #drawer.open { right: 0; }
+        
+        .drawer-header { font-family: 'Noto Serif SC', serif; font-size: 18px; letter-spacing: 3px; color: var(--accent-red); margin-bottom: 40px; border-bottom: 1px solid var(--border-light); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .close-drawer { cursor: pointer; font-size: 20px; color: var(--text-muted); font-family: 'Inter', sans-serif; }
+
+        .heatmap-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 30px; }
+        .nav-btn { cursor: pointer; font-size: 16px; color: rgba(44,44,44,0.4); padding: 4px; user-select: none; transition: color 0.2s;}
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.disabled { opacity: 0.15; cursor: default; pointer-events: none; }
+        .month-name { font-family: 'Noto Serif SC', serif; font-size: 15px; color: var(--text-main); width: 110px; text-align: center; letter-spacing: 2px;}
+
+        .heatmap-wrapper { display: flex; flex-direction: column; gap: 8px; justify-content: center; align-items: center;}
+        
+        .heatmap-x-axis { 
+            display: grid; grid-template-columns: repeat(7, 30px); gap: 10px; 
+            font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(44,44,44,0.4); 
+            justify-items: center; text-align: center; width: 270px;
+        }
+        
+        .heatmap-grid { 
+            display: grid; grid-template-columns: repeat(7, 30px); gap: 10px; width: 270px; 
+        }
+        
+        .day-cell {
+            width: 30px; height: 30px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.02);
+            background: rgba(0,0,0,0.03); cursor: pointer; position: relative; transition: all 0.2s; box-sizing: border-box;
+        }
+        .day-cell.hidden { display: none; }
+        .day-cell.empty { visibility: hidden; }
+        .day-cell.future-or-past { opacity: 0.1; pointer-events: none; }
+        
+        .day-cell:hover:not(.future-or-past) { background: rgba(0,0,0,0.06); transform: translateY(-2px); z-index: 10; border-color: rgba(44,44,44,0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .day-cell.lit { background: var(--accent-red); opacity: 0.75; border-color: rgba(139,58,58,0.2); }
+        .day-cell.lit:hover { opacity: 1; border-color: #fff; box-shadow: 0 4px 12px rgba(139,58,58,0.3); }
+
+        #log-detail { display: none; animation: fadeIn 0.4s ease; margin-top: 10px;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .back-to-grid { font-family: 'Noto Serif SC', serif; font-size: 13px; color: var(--text-muted); cursor: pointer; margin-bottom: 30px; display: inline-block; transition: color 0.2s; }
+        .back-to-grid:hover { color: var(--text-main); }
+        .detail-day-header { font-family: 'Noto Serif SC', serif; font-size: 40px; color: var(--text-main); margin-bottom: 8px; line-height: 1; letter-spacing: -2px; }
+        .detail-date-header { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text-muted); margin-bottom: 40px; letter-spacing: 1px; }
+        .detail-quote { font-family: 'Noto Serif SC', serif; font-size: 15px; line-height: 1.8; color: var(--text-main); margin-bottom: 50px; padding-left: 18px; border-left: 2px solid var(--border-light); }
+        .detail-recs .rec-label { font-size: 10px; letter-spacing: 2px; color: var(--accent-red); margin-bottom: 6px; }
+        .detail-recs .rec-title { font-family: 'Noto Serif SC', serif; font-size: 14px; color: var(--text-main); margin-bottom: 22px; font-weight: 600; }
+
+        .past-date-notice {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            font-size: 11px; letter-spacing: 2px; color: var(--text-muted); padding: 4px 12px;
+            border: 1px solid var(--border-light); border-radius: 12px; display: none; white-space: nowrap;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Firebase Auth Overlay -->
+    <div id="login-screen">
+        <h1 class="login-title">人生一万天</h1>
+        <button class="btn" id="google-login-btn">以 Google 身份进入</button>
+    </div>
+
+    <!-- Onboarding Step -->
+    <div id="onboarding-screen">
+        <div class="card-base onboarding-card">
+            <div class="intro-text">
+                <p>如果把一生按80年计算，我们大约拥有三万天。</p>
+                <p>但其中，三十年在睡眠与生理需求中流逝；<br>二十多年用于工作、责任与不得不承担的角色。</p>
+                <p>真正属于你的时间，不到三分之一。</p>
+                <p>人生看似漫长，其实紧凑；看似自由，其实稀缺。</p>
+                <p>所以，「人生一万天」不是在提醒你时间有限，<br>而是在问你——</p>
+                <p class="highlight">在这有限的时间里，你想把多少留给自己？</p>
+            </div>
+            <div class="divider" style="margin: 0px 0 35px 0;"></div>
+            <h2 class="onboarding-title">哪一天，你降临于此？</h2>
+            <input type="date" id="birthday-input" class="date-input">
+            <button class="btn" id="start-btn">开启时间刻度</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="app-container">
+        <div class="flipper" id="card-flipper">
+            <div class="card-base front-face" id="calendar-face">
+                <div class="past-date-notice" id="past-date-notice">正在补记过去的日子</div>
+                <div class="binding"><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+                <div class="date-header" id="day-counter">DAY --</div>
+                <h1 class="date-number" id="current-day-num">--</h1>
+                <div class="date-meta-wrapper">
+                    <span class="date-meta" id="current-meta">--年 --月 · 星期--</span>
+                    <span id="weather-info">拉取气流中...</span>
+                </div>
+                <div class="divider"></div>
+                <div class="quote-area">在这庞大又短暂的人生里，<br>留住一万天的精神自留地。</div>
+                <div class="input-group">
+                    <input type="text" id="memory-input" class="input-field" placeholder="这一天，是因为哪部作品或心绪闪光？" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="card-base back-face" id="result-face">
+                <div class="binding"><div class="hole"></div><div class="hole"></div><div class="hole"></div></div>
+                <div class="rec-header">你的回响，万物已有共鸣</div>
+                
+                <div class="rec-item"><div class="rec-label">📖 灵感共鸣的书籍</div><div class="rec-title" id="rec-book">--</div></div>
+                <div class="rec-item"><div class="rec-label">🎬 光影折射的电影</div><div class="rec-title" id="rec-movie">--</div></div>
+                <div class="rec-item"><div class="rec-label">🎵 频率同步的音乐</div><div class="rec-title" id="rec-music">--</div></div>
+
+                <div class="divider" style="margin: 20px 0;"></div>
+                <button class="btn back-btn" id="write-another-btn">回拨到今天</button>
+            </div>
+        </div>
+        <div class="meta-footer">
+            <span id="auth-info-display">TEN THOUSAND DAYS</span>
+            <span class="logout-btn" id="logout-btn">退出云端</span>
+        </div>
+    </div>
+
+    <!-- 侧边历史记录抽屉 -->
+    <div id="timeline-btn">过往日子</div>
+    <div id="drawer">
+        <div class="drawer-header">
+            <span>记录人生热力图</span>
+            <span class="close-drawer" id="close-drawer">×</span>
+        </div>
+        
+        <div id="heatmap-view">
+            <div class="heatmap-controls">
+                <span class="nav-btn" id="btn-prev-year">«</span>
+                <span class="nav-btn" id="btn-prev-month">‹</span>
+                <div class="month-name" id="month-display">2026年 3月</div>
+                <span class="nav-btn" id="btn-next-month">›</span>
+                <span class="nav-btn" id="btn-next-year">»</span>
+            </div>
+            <div class="heatmap-wrapper">
+                <div class="heatmap-x-axis">
+                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                </div>
+                <div id="heatmap-grid" class="heatmap-grid"></div>
+            </div>
+        </div>
+        
+        <!-- Detail View -->
+        <div id="log-detail">
+            <div class="back-to-grid" id="back-to-grid">← 返回整月图</div>
+            <div id="log-detail-content"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Modular -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, writeBatch, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+        // 请提醒：确保已经在 Firebase 控制台开放了 Firestore Database 和 Google 登录功能
+        const firebaseConfig = {
+            apiKey: "AIzaSyATsY5IjkpKXV9NvbA4J8z_qoeYLgc5laU",
+            authDomain: "life-10k-days.firebaseapp.com",
+            projectId: "life-10k-days",
+            storageBucket: "life-10k-days.firebasestorage.app",
+            messagingSenderId: "991166074195",
+            appId: "1:991166074195:web:f63f2a9e3dbed012e7e5a6",
+            measurementId: "G-B742FQXGR7"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let globalBirthdate = null;
+        let activeRecordDate = new Date(); 
+        let viewDate = new Date();
+        let cloudLogMap = {};
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const onboardingScreen = document.getElementById('onboarding-screen');
+        const appContainer = document.getElementById('app-container');
+        const birthdayInput = document.getElementById('birthday-input');
+        
+        const dayCounter = document.getElementById('day-counter');
+        const currentDayNum = document.getElementById('current-day-num');
+        const currentMeta = document.getElementById('current-meta');
+        const weatherInfo = document.getElementById('weather-info');
+        const memoryInput = document.getElementById('memory-input');
+        const cardFlipper = document.getElementById('card-flipper');
+        const pastDateNotice = document.getElementById('past-date-notice');
+        
+        const recBook = document.getElementById('rec-book');
+        const recMovie = document.getElementById('rec-movie');
+        const recMusic = document.getElementById('rec-music');
+        
+        const drawer = document.getElementById('drawer');
+        const heatmapView = document.getElementById('heatmap-view');
+        const heatmapGrid = document.getElementById('heatmap-grid');
+        const monthDisplay = document.getElementById('month-display');
+        const logDetail = document.getElementById('log-detail');
+        const logDetailContent = document.getElementById('log-detail-content');
+        
+        const bPrevY = document.getElementById('btn-prev-year');
+        const bPrevM = document.getElementById('btn-prev-month');
+        const bNextY = document.getElementById('btn-next-year');
+        const bNextM = document.getElementById('btn-next-month');
+
+        // ==== Auth & Firebase Logic ====
+        document.getElementById('google-login-btn').addEventListener('click', async () => {
+            try {
+                // Ensure auth works and ignores if localhost cross-origin problems occur locally
+                await signInWithPopup(auth, provider);
+            } catch(e) {
+                alert("登录失败：" + e.message);
+                console.error(e);
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+             signOut(auth);
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-info-display').innerText = `已同步 • ${user.email}`;
+                
+                loginScreen.style.opacity = '0';
+                setTimeout(() => loginScreen.style.display = 'none', 800);
+
+                try {
+                    const userRef = doc(db, "users", user.uid);
+                    const userSnap = await getDoc(userRef);
+                    
+                    if (userSnap.exists()) {
+                        globalBirthdate = userSnap.data().userBirthdate;
+                    }
+
+                    // Check Local Migration
+                    const localBday = localStorage.getItem('userBirthdate');
+                    if (!globalBirthdate && localBday) {
+                        globalBirthdate = localBday;
+                        await syncLocalToCloud(user.uid);
+                    }
+
+                    if (globalBirthdate) {
+                        onboardingScreen.style.display = 'none';
+                        appContainer.style.opacity = '1';
+                        appContainer.style.pointerEvents = 'auto';
+                        setupCalendar(globalBirthdate, new Date());
+                        viewDate = new Date();
+                        renderHeatmap();
+                    } else {
+                        onboardingScreen.style.display = 'flex';
+                        setTimeout(() => onboardingScreen.style.opacity = '1', 50);
+                    }
+                } catch(e) {
+                    // Possible permission error if Firestore is not created in Console
+                    console.error("Firestore Init Error:", e);
+                    alert("检测到未初始化的数据库！请前往 Firebase 控制台点击开启 Firestore Database 后再刷新。");
+                }
+            } else {
+                currentUser = null;
+                loginScreen.style.display = 'flex';
+                setTimeout(() => loginScreen.style.opacity = '1', 50);
+                appContainer.style.opacity = '0';
+                appContainer.style.pointerEvents = 'none';
+                onboardingScreen.style.display = 'none';
+                drawer.classList.remove('open');
+            }
+        });
+
+        async function syncLocalToCloud(uid) {
+            try {
+                const bday = localStorage.getItem('userBirthdate');
+                if (bday) {
+                    await setDoc(doc(db, "users", uid), { userBirthdate: bday }, { merge: true });
+                }
+                const logs = JSON.parse(localStorage.getItem('10k-days-logs') || '[]');
+                if (logs.length > 0) {
+                    const batch = writeBatch(db);
+                    logs.forEach(l => {
+                        let pt = l.date.split(/[\/\-]/);
+                        let dateKey = `${parseInt(pt[0])}-${parseInt(pt[1])}-${parseInt(pt[2])}`;
+                        const logRef = doc(db, "users", uid, "logs", dateKey);
+                        batch.set(logRef, l);
+                    });
+                    await batch.commit();
+                }
+                localStorage.removeItem('userBirthdate');
+                localStorage.removeItem('10k-days-logs');
+            } catch(e) {
+                console.error("Migration Data Sync failed:", e);
+            }
+        }
+
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            const bday = birthdayInput.value;
+            if (!bday) { alert("请选择您的降临之日！"); return; }
+            globalBirthdate = bday;
+            
+            if (currentUser) {
+                await setDoc(doc(db, "users", currentUser.uid), { userBirthdate: bday }, { merge: true });
+            }
+
+            onboardingScreen.style.opacity = '0';
+            setTimeout(() => {
+                onboardingScreen.style.display = 'none';
+                appContainer.style.opacity = '1';
+                appContainer.style.pointerEvents = 'auto';
+                setupCalendar(globalBirthdate, new Date());
+                viewDate = new Date();
+                renderHeatmap();
+            }, 800);
+        });
+
+        // ==== Standard Display Logic ====
+        const wmoCodes = {
+            0: '☀️ 晴', 1: '🌤️ 晴间多云', 2: '⛅ 多云', 3: '☁️ 阴',
+            45: '🌫️ 雾', 48: '🌫️ 雾淞', 51: '🌧️ 毛毛雨', 53: '🌧️ 小雨', 55: '🌧️ 细雨',
+            56: '🌧️ 冻毛毛雨', 57: '🌧️ 冻雨', 61: '🌧️ 小阵雨', 63: '🌧️ 阵雨', 65: '🌧️ 大雨',
+            66: '🌧️ 冻小雨', 67: '🌧️ 冻大雨', 71: '❄️ 小雪', 73: '❄️ 中雪', 75: '❄️ 大雪', 77: '❄️ 雪粒',
+            80: '🌧️ 阵雨', 81: '🌧️ 阵雨', 82: '🌧️ 暴雨', 85: '❄️ 小阵雪', 86: '❄️ 大阵雪',
+            95: '⛈️ 雷雨', 96: '⛈️ 雷电冰雹', 99: '⛈️ 大雷雹'
+        };
+
+        async function fetchLocation() {
+            try {
+                let res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                let data = await res.json();
+                return { lat: data.latitude, lon: data.longitude, city: data.city };
+            } catch(e) {
+                return null;
+            }
+        }
+
+        async function fetchWeather(targetDate) {
+            weatherInfo.style.opacity = '0'; 
+            let geo = await fetchLocation();
+            if(!geo) { weatherInfo.innerText = ''; return; }
+
+            let tzDateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,'0')}-${String(targetDate.getDate()).padStart(2,'0')}`;
+            let diffDays = (new Date() - targetDate) / (1000*3600*24);
+            
+            let url = (diffDays > 5) 
+                ? `https://archive-api.open-meteo.com/v1/archive?latitude=${geo.lat}&longitude=${geo.lon}&start_date=${tzDateStr}&end_date=${tzDateStr}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`
+                : `https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`;
+
+            try {
+                let res = await fetch(url);
+                let data = await res.json();
+                let daily = data.daily;
+                if(daily && daily.time && daily.time.length > 0) {
+                    let idx = daily.time.indexOf(tzDateStr);
+                    if(idx === -1) idx = 0; 
+                    let code = daily.weathercode[idx];
+                    let maxT = Math.round(daily.temperature_2m_max[idx]);
+                    let minT = Math.round(daily.temperature_2m_min[idx]);
+                    let emojiText = wmoCodes[code] || '🌡️';
+                    weatherInfo.innerText = `${geo.city} · ${emojiText} ${minT}°-${maxT}°`;
+                    weatherInfo.style.opacity = '1';
+                } else {
+                    weatherInfo.innerText = '';
+                }
+            } catch(e) { weatherInfo.innerText = ''; }
+        }
+
+        function stripTime(dateStrOrObj) {
+            let d = new Date(dateStrOrObj);
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        function setupCalendar(birthdayStr, targetDate = new Date()) {
+            const birthDate = stripTime(birthdayStr);
+            activeRecordDate = stripTime(targetDate);
+            const today = stripTime(new Date());
+            const diffTime = activeRecordDate - birthDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            dayCounter.innerText = `DAY ${diffDays > 0 ? diffDays : '--'}`;
+            currentDayNum.innerText = activeRecordDate.getDate();
+            
+            const year = activeRecordDate.getFullYear();
+            const month = activeRecordDate.getMonth() + 1;
+            const dayNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+            currentMeta.innerText = `${year}年 ${month}月 · ${dayNames[activeRecordDate.getDay()]}`;
+
+            if(activeRecordDate < today) {
+                pastDateNotice.style.display = 'block';
+                dayCounter.style.color = 'var(--text-main)';
+            } else {
+                pastDateNotice.style.display = 'none';
+                dayCounter.style.color = 'var(--accent-red)';
+            }
+            fetchWeather(activeRecordDate);
+        }
+
+        const mockDictionary = [
+            { keywords: ["孤独", "寂寞", "孤单"], book: "《百年孤独》- 马尔克斯", movie: "《Her (她)》", music: "《Numb》" },
+            { keywords: ["爱", "浪漫", "心动"], book: "《霍乱时期的爱情》", movie: "《爱在黎明破晓前》", music: "《La Vie En Rose》" },
+            { keywords: ["累", "卷", "疲惫", "迷茫"], book: "《悉达多》- 黑塞", movie: "《小森林》", music: "《Weightless》" },
+            { keywords: ["快乐", "爽", "美好", "激动"], book: "《人类群星闪耀时》", movie: "《白日梦想家》", music: "《Viva La Vida》" }
+        ];
+        function getRecommendation(text) {
+            for (let item of mockDictionary) {
+                for (let kw of item.keywords) {
+                    if (text.includes(kw)) return item;
+                }
+            }
+            return { book: "《解忧杂货店》", movie: "《星际穿越》", music: "《Clair de Lune》" };
+        }
+
+        memoryInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const text = memoryInput.value.trim();
+                if (!text || !currentUser) return;
+
+                const recs = getRecommendation(text);
+                recBook.innerText = recs.book;
+                recMovie.innerText = recs.movie;
+                recMusic.innerText = recs.music;
+
+                const y = activeRecordDate.getFullYear();
+                const m = activeRecordDate.getMonth() + 1;
+                const d = activeRecordDate.getDate();
+                const dateKey = `${y}-${m}-${d}`;
+                const pureDate = `${y}/${m}/${d}`;
+
+                const newObj = {
+                    date: pureDate,
+                    dayCount: dayCounter.innerText,
+                    text: text,
+                    weather: weatherInfo.innerText, 
+                    recs: recs
+                };
+
+                await setDoc(doc(db, "users", currentUser.uid, "logs", dateKey), newObj);
+                await renderHeatmap();
+                
+                memoryInput.blur();
+                cardFlipper.classList.add('is-flipped');
+            }
+        });
+
+        document.getElementById('write-another-btn').addEventListener('click', () => {
+            cardFlipper.classList.remove('is-flipped');
+            memoryInput.value = '';
+            setupCalendar(globalBirthdate, new Date());
+            setTimeout(() => memoryInput.focus(), 800);
+        });
+
+        async function renderHeatmap() {
+            if (!currentUser || !globalBirthdate) return;
+            heatmapView.style.display = 'block';
+            logDetail.style.display = 'none';
+
+            let bday = stripTime(globalBirthdate);
+            let today = stripTime(new Date());
+
+            let vy = viewDate.getFullYear();
+            let vm = viewDate.getMonth();
+            let by = bday.getFullYear();
+            let bm = bday.getMonth();
+            let ty = today.getFullYear();
+            let tm = today.getMonth();
+
+            if (vy < by || (vy === by && vm < bm)) { viewDate = new Date(by, bm, 1); vy = by; vm = bm; }
+            if (vy > ty || (vy === ty && vm > tm)) { viewDate = new Date(ty, tm, 1); vy = ty; vm = tm; }
+            monthDisplay.innerText = `${vy}年 ${vm + 1}月`;
+
+            bPrevY.classList.toggle('disabled', (vy === by));
+            bPrevM.classList.toggle('disabled', (vy === by && vm === bm));
+            bNextY.classList.toggle('disabled', (vy === ty));
+            bNextM.classList.toggle('disabled', (vy === ty && vm === tm));
+
+            // 一股脑拉取当前用户所有云端日志，由于日志总量最高三万行且无需每次热更新拉取，这里暂时每次拿全部
+            const logsQuery = query(collection(db, "users", currentUser.uid, "logs"));
+            const snapshot = await getDocs(logsQuery);
+            cloudLogMap = {};
+            snapshot.forEach(d => { cloudLogMap[d.id] = d.data(); });
+
+            heatmapGrid.innerHTML = '';
+            const firstDayOfMonth = new Date(vy, vm, 1);
+            const daysInMonth = new Date(vy, vm + 1, 0).getDate();
+            let startDayOfWeek = firstDayOfMonth.getDay(); 
+            const totalCells = daysInMonth + startDayOfWeek;
+            const rows = Math.ceil(totalCells / 7);
+
+            let currentDayStr = 1;
+            for (let i = 0; i < (rows * 7); i++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+
+                if (i < startDayOfWeek || currentDayStr > daysInMonth) {
+                    cell.classList.add('empty'); 
+                } else {
+                    let d = currentDayStr;
+                    let iterDate = new Date(vy, vm, d);
+                    let key = `${vy}-${vm + 1}-${d}`;
+
+                    if (iterDate < bday || iterDate > today) {
+                        cell.classList.add('future-or-past');
+                        cell.title = "生命长阶的局外";
+                    } else {
+                        if (cloudLogMap[key]) {
+                            cell.classList.add('lit');
+                            cell.title = `${vy}年${vm+1}月${d}日 · 已打卡`;
+                            cell.addEventListener('click', () => { showLogDetail(cloudLogMap[key], d); });
+                        } else {
+                            cell.title = `${vy}年${vm+1}月${d}日 · 点击补记`;
+                            cell.addEventListener('click', () => {
+                                drawer.classList.remove('open');
+                                cardFlipper.classList.remove('is-flipped');
+                                memoryInput.value = '';
+                                setupCalendar(globalBirthdate, iterDate);
+                                setTimeout(() => memoryInput.focus(), 600);
+                            });
+                        }
+                    }
+                    currentDayStr++;
+                }
+                heatmapGrid.appendChild(cell);
+            }
+        }
+
+        function showLogDetail(log, rawDay) {
+            heatmapView.style.display = 'none';
+            logDetail.style.display = 'block';
+            let weatherDisplay = log.weather ? `<br><span style="color:var(--text-muted); font-size: 11px;">${log.weather}</span>` : '';
+            logDetailContent.innerHTML = `
+                <div class="detail-day-header">${rawDay}</div>
+                <div class="detail-date-header">${log.date} · ${log.dayCount}${weatherDisplay}</div>
+                <div class="detail-quote">"${log.text}"</div>
+                <div class="detail-recs">
+                    <div class="rec-label">📖 灵感共鸣的书籍</div>
+                    <div class="rec-title">${log.recs.book}</div>
+                    <div class="rec-label">🎬 光影折射的电影</div>
+                    <div class="rec-title">${log.recs.movie}</div>
+                    <div class="rec-label">🎵 频率同步的音乐</div>
+                    <div class="rec-title">${log.recs.music}</div>
+                </div>
+            `;
+        }
+
+        document.getElementById('back-to-grid').addEventListener('click', () => { renderHeatmap(); });
+        document.getElementById('timeline-btn').addEventListener('click', () => { drawer.classList.add('open'); viewDate = new Date(activeRecordDate.getFullYear(), activeRecordDate.getMonth(), 1); renderHeatmap(); });
+        document.getElementById('close-drawer').addEventListener('click', () => { drawer.classList.remove('open'); });
+        
+        bPrevY.addEventListener('click', () => { if(!bPrevY.classList.contains('disabled')) { viewDate.setFullYear(viewDate.getFullYear() - 1); renderHeatmap(); }});
+        bPrevM.addEventListener('click', () => { if(!bPrevM.classList.contains('disabled')) { viewDate.setMonth(viewDate.getMonth() - 1); renderHeatmap(); }});
+        bNextY.addEventListener('click', () => { if(!bNextY.classList.contains('disabled')) { viewDate.setFullYear(viewDate.getFullYear() + 1); renderHeatmap(); }});
+        bNextM.addEventListener('click', () => { if(!bNextM.classList.contains('disabled')) { viewDate.setMonth(viewDate.getMonth() + 1); renderHeatmap(); }});
+
+        document.addEventListener('mousemove', (e) => {
+            if (drawer.classList.contains('open') || loginScreen.style.opacity === '1') return; 
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 80;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 80;
+            appContainer.style.transform = `translateY(-2px) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        document.addEventListener('mouseleave', () => { appContainer.style.transform = `translateY(0) rotateY(0deg) rotateX(0deg)`; });
+    </script>
+</body>
+</html>
