@@ -37,21 +37,7 @@
 - **核心构建**：纯原生 HTML5, CSS3 变量与 Flex/Grid 布局, 原生 JavaScript ES6。
 - **云端服务**：Firebase 10.x SDK (通过原生浏览器 ES Module 直接 CDN 引入，免除一切打包工具如 Webpack/Vite)。
 
-## 🚀 本地运行方式 (How to run locally)
-
-由于应用使用了模块化（`type="module"`）引入 Firebase JS SDK，为避开现代浏览器的本地 CORS 严格跨域限制，你只需要一个简单的本地微型服务器：
-
-1. 克隆或下载此仓库内容至电脑。
-2. 在终端（Terminal）进入该目录，运行：
-```bash
-npx serve .
-```
-*(或者如果你习惯使用 Python：)*
-```bash
-python3 -m http.server 3000
-```
-3. 在浏览器打开 `http://localhost:3000` 即可开始丈量你生命的时钟。
-
+---
 
 ## 📜 结语
 人生看似漫长，其实紧凑；看似自由，其实稀缺。
